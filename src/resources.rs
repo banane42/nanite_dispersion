@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::Resource, entity::Entity}, math::Vec2};
 use rand::{thread_rng, Rng};
 
-use crate::nanite::GridPos;
+use crate::components::grid_pos::GridPos;
 
 #[derive(Resource, Default)]
 pub struct MouseWorldCoords(pub Vec2);

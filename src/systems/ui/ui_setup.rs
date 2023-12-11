@@ -1,4 +1,6 @@
-use bevy::{ecs::{system::Commands, component::Component}, ui::{node_bundles::NodeBundle, Style, Val, JustifyContent, UiRect, AlignItems}, prelude::default, hierarchy::BuildChildren, render::color::Color};
+use bevy::{ecs::{system::Commands, component::Component}, ui::{node_bundles::{NodeBundle, TextBundle}, Style, Val, JustifyContent, UiRect, AlignItems, Direction, JustifyItems}, prelude::default, hierarchy::BuildChildren, render::color::Color, text::TextStyle};
+
+use super::{theme::{BOARDER_COLOR, BACKGROUND_COLOR, TEXT_COLOR}, ui_continuous::HexPosText};
 
 pub fn ui_setup(
     mut commands: Commands
@@ -21,7 +23,7 @@ pub fn ui_setup(
                 border: UiRect::all(Val::Px(2.)),
                 ..default()
             },
-            background_color: Color::rgb(0.65, 0.65, 0.65).into(),
+            background_color: BOARDER_COLOR.into(),
             ..default()
         }).with_children(|parent| {
             // compass box content
@@ -32,7 +34,7 @@ pub fn ui_setup(
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                background_color: BACKGROUND_COLOR.into(),
                 ..default()
             }).with_children(|compass_box| {
                 //Compass
@@ -59,6 +61,37 @@ pub fn ui_setup(
                         ..default()
                     });
                 });
+            });
+        });
+
+        //Right Info
+        root.spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(20.),
+                height: Val::Percent(100.),
+                border: UiRect::all(Val::Px(2.0)),
+                ..default()
+            },
+            background_color: BOARDER_COLOR.into(),        
+            ..default()
+        }).with_children(|info_pane_boarder| {
+            info_pane_boarder.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                background_color: BACKGROUND_COLOR.into(),
+                ..default()
+            }).with_children(|info_pane_content| {
+                info_pane_content.spawn((TextBundle::from_section(
+                    "Text", 
+                    TextStyle {
+                        color: TEXT_COLOR.into(),
+                        ..default()
+                    }
+                ), HexPosText));
             });
         });
     });

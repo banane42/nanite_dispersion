@@ -1,7 +1,7 @@
-use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::EventReader}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
+use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{resources::{MouseWorldCoords, Weather}, nanite::GridPos};
+use crate::{resources::{MouseWorldCoords, Weather}, components::clickable::{Clickable, OnClickEvents}};
 
 use super::startup_systems::MainCamera;
 
@@ -74,16 +74,21 @@ pub fn on_click(
     mouse_wrld_coords: Res<MouseWorldCoords>,
     mouse_input: Res<Input<MouseButton>>,
     rapier_context: Res<RapierContext>,
-    grid_q: Query<&GridPos>
+    mut event_writer: EventWriter<OnClickEvents>,
+    clickable_q: Query<&Clickable>
 ) {
     if mouse_input.just_released(MouseButton::Left) {
         rapier_context.intersections_with_point(
             mouse_wrld_coords.0, 
             QueryFilter::default(), 
-            |parent_entity| {
-                let gp = grid_q.get(parent_entity).unwrap();
-                println!("Clicked: {}", gp);
-                false
+            |entity| {
+                match clickable_q.get(entity) {
+                    Ok(clickable) => {
+                        event_writer.send(clickable.get_event());
+                        false
+                    },
+                    Err(_) => true,
+                }
             })
     }
 }

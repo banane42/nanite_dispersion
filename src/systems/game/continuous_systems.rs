@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{Query, ResMut, Res}, query::Changed, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
-use crate::{nanite::{Nanite, GridPos}, resources::{HexGrid, Weather, NaniteReserve}};
+use crate::{components::{nanite::Nanite, grid_pos::GridPos}, resources::{HexGrid, Weather, NaniteReserve}};
 
 pub fn nanite_wind(
     hex_grid: Res<HexGrid>,
