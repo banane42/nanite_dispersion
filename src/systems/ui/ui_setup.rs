@@ -1,6 +1,8 @@
-use bevy::{ecs::{system::Commands, component::Component}, ui::{node_bundles::{NodeBundle, TextBundle}, Style, Val, JustifyContent, UiRect, AlignItems, Direction, JustifyItems}, prelude::default, hierarchy::BuildChildren, render::color::Color, text::TextStyle};
+use bevy::{ecs::{system::Commands, component::Component}, ui::{node_bundles::{NodeBundle, TextBundle, ButtonBundle}, Style, Val, JustifyContent, UiRect, AlignItems, Direction, JustifyItems, FlexDirection, AlignContent, PositionType}, prelude::default, hierarchy::BuildChildren, render::{color::Color, view::Visibility}, text::{TextStyle, TextAlignment}};
 
-use super::{theme::{BOARDER_COLOR, BACKGROUND_COLOR, TEXT_COLOR}, ui_continuous::HexPosText};
+use crate::components::ui::{UICompass, HexPosText, RightInfoPane, ButtonOnClick};
+
+use super::theme::{BOARDER_COLOR, BACKGROUND_COLOR, TEXT_COLOR};
 
 pub fn ui_setup(
     mut commands: Commands
@@ -65,26 +67,57 @@ pub fn ui_setup(
         });
 
         //Right Info
-        root.spawn(NodeBundle {
+        root.spawn((NodeBundle {
             style: Style {
                 width: Val::Percent(20.),
                 height: Val::Percent(100.),
                 border: UiRect::all(Val::Px(2.0)),
                 ..default()
             },
+            visibility: Visibility::Hidden,
             background_color: BOARDER_COLOR.into(),        
             ..default()
-        }).with_children(|info_pane_boarder| {
-            info_pane_boarder.spawn(NodeBundle {
+        }, RightInfoPane)
+        ).with_children(|info_pane_content| {
+            info_pane_content.spawn(NodeBundle {
                 style: Style {
                     width: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
+                    justify_content: JustifyContent::Start,
+                    flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Center,
                     ..default()
                 },
                 background_color: BACKGROUND_COLOR.into(),
                 ..default()
             }).with_children(|info_pane_content| {
+                //Close Button
+                info_pane_content.spawn((ButtonBundle {
+                    style: Style {
+                        width: Val::Px(25.),
+                        height: Val::Px(25.),
+                        left: Val::Px(4.),
+                        top: Val::Px(4.),
+                        position_type: PositionType::Absolute,
+                        border: UiRect::all(Val::Px(1.0)),
+                        justify_content: JustifyContent::Center,
+                        align_content: AlignContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: Color::WHITE.into(),
+                    border_color: BOARDER_COLOR.into(),
+                    ..default()
+                }, ButtonOnClick::InfoPaneClose))
+                .with_children(|close_button| {
+                    close_button.spawn((TextBundle::from_section(
+                        "X", 
+                        TextStyle {
+                            color: TEXT_COLOR.into(),
+                            ..default()
+                        }
+                    )).with_text_alignment(TextAlignment::Center));
+                });
+                // Grid Pos Text
                 info_pane_content.spawn((TextBundle::from_section(
                     "Text", 
                     TextStyle {
@@ -96,6 +129,3 @@ pub fn ui_setup(
         });
     });
 }
-
-#[derive(Component)]
-pub struct UICompass;

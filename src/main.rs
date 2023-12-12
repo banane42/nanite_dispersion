@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use components::clickable::OnClickEvents;
-use systems::{game::startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, game::input_systems::{calc_world_coords, on_click, keyboard_input, mouse_input, zoom_camera}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_hex_click}}};
+use resources::GameEntitiesClickable;
+use systems::{game::startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, game::input_systems::{calc_world_coords, on_game_entity_click, keyboard_input, mouse_input, zoom_camera}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_hex_click, ui_button_system, reset_game_entities_clickable}}};
 
 mod resources;
 mod systems;
@@ -25,8 +26,9 @@ fn main() {
         .add_systems(First, calc_world_coords)
         .add_systems(First, keyboard_input)
         .add_systems(First, mouse_input)
-        .add_systems(PreUpdate, on_click)
+        .add_systems(First, ui_button_system.before(reset_game_entities_clickable))
         .add_systems(PreUpdate, zoom_camera)
+        .add_systems(PreUpdate, on_game_entity_click.run_if(game_entities_clickable))
         //Nanite systems
         .add_systems(Update, ((
                 nanite_introduction,
@@ -39,6 +41,7 @@ fn main() {
         //Graphics update
         .add_systems(Last, nanite_material_update)
         .add_systems(Last, update_compass)
+        .add_systems(Last, reset_game_entities_clickable)
         .run();
 }
 
@@ -53,4 +56,8 @@ fn time_passed(t: f32) -> impl FnMut(Local<f32>, Res<Time>) -> bool {
         }
         run
     }
+}
+
+fn game_entities_clickable(clickable: Res<GameEntitiesClickable>) -> bool {
+    clickable.0
 }

@@ -70,7 +70,7 @@ pub fn zoom_camera(
     ortho_proj.scale = camera.interp_zoom(time.elapsed_seconds_wrapped());
 }
 
-pub fn on_click(
+pub fn on_game_entity_click(
     mouse_wrld_coords: Res<MouseWorldCoords>,
     mouse_input: Res<Input<MouseButton>>,
     rapier_context: Res<RapierContext>,

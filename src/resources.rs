@@ -6,6 +6,15 @@ use crate::components::grid_pos::GridPos;
 #[derive(Resource, Default)]
 pub struct MouseWorldCoords(pub Vec2);
 
+#[derive(Resource)]
+pub struct GameEntitiesClickable(pub bool);
+
+impl Default for GameEntitiesClickable {
+    fn default() -> Self {
+        GameEntitiesClickable(true)
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub enum HexDirection {
     TopLeft,

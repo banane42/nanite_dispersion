@@ -1,7 +1,7 @@
 use bevy::{ecs::{component::Component, system::{Commands, ResMut, Resource, Res}, entity::Entity}, core_pipeline::{core_2d::{Camera2dBundle, Camera2d}, clear_color::ClearColorConfig}, prelude::default, render::{color::Color, mesh::{Mesh, shape}}, math::{Vec2, Vec3}, sprite::{Mesh2dHandle, ColorMaterial, MaterialMesh2dBundle}, asset::Assets, transform::components::Transform, hierarchy::BuildChildren};
 use bevy_rapier2d::geometry::Collider;
 
-use crate::{resources::{MouseWorldCoords, HexGrid, Weather, NaniteReserve}, components::{nanite::Nanite, grid_pos::GridPos, clickable::{Clickable, OnClickEvents}}};
+use crate::{resources::{MouseWorldCoords, HexGrid, Weather, NaniteReserve, GameEntitiesClickable}, components::{nanite::Nanite, grid_pos::GridPos, clickable::{Clickable, OnClickEvents}}};
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -47,6 +47,8 @@ pub fn setup(
     commands.insert_resource(NaniteReserve {
         amount: 1000.0
     });
+
+    commands.init_resource::<GameEntitiesClickable>();
 }
 
 pub fn setup_camera(
