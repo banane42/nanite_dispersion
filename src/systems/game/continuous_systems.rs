@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{Query, ResMut, Res}, query::Changed, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
-use crate::{components::{nanite::Nanite, grid_pos::GridPos}, resources::{HexGrid, Weather, NaniteReserve}};
+use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain}, resources::{HexGrid, Weather, NaniteReserve, MapState}};
 
 pub fn nanite_wind(
     hex_grid: Res<HexGrid>,
@@ -91,6 +91,37 @@ pub fn adjust_wind(
     mut weather: ResMut<Weather>
 ) {
     weather.adjust_wind();
+}
+
+pub fn map_state_material_static(
+    map_state: Res<MapState>,
+    hex_grid: Res<HexGrid>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    hex_q: Query<(&Children, &Terrain)>,
+    material_q: Query<&mut Handle<ColorMaterial>>
+) {
+    match *map_state {
+        MapState::Terrain => {
+            for row in hex_grid.grid.iter() {
+                for ent in row.iter() {
+                    match hex_q.get(*ent) {
+                        Ok((children, terrain)) => {
+                            children.iter().for_each(|child| {
+                                match material_q.get(*child) {
+                                    Ok(handle) => {
+                                        materials.get_mut(handle).unwrap().color = Color::from(terrain);
+                                    },
+                                    Err(err) => eprintln!("error in map_state_material_static\n{}", err),
+                                }
+                            })
+                        },
+                        Err(err) => eprintln!("error in map_state_material_static\n{}", err),
+                    }
+                }
+            }
+        },
+        _ => {} // Nanite taken care of in nanite_material_update
+    }
 }
 
 pub fn nanite_material_update(

@@ -1,4 +1,4 @@
-use bevy::{ecs::{system::Commands, component::Component}, ui::{node_bundles::{NodeBundle, TextBundle, ButtonBundle}, Style, Val, JustifyContent, UiRect, AlignItems, Direction, JustifyItems, FlexDirection, AlignContent, PositionType}, prelude::default, hierarchy::BuildChildren, render::{color::Color, view::Visibility}, text::{TextStyle, TextAlignment}};
+use bevy::{ecs::system::Commands, ui::{node_bundles::{NodeBundle, TextBundle, ButtonBundle}, Style, Val, JustifyContent, UiRect, AlignItems, FlexDirection, AlignContent, PositionType}, prelude::default, hierarchy::BuildChildren, render::{color::Color, view::Visibility}, text::{TextStyle, TextAlignment}};
 
 use crate::components::ui::{UICompass, HexPosText, RightInfoPane, ButtonOnClick};
 

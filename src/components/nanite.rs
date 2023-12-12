@@ -1,5 +1,4 @@
 use bevy::ecs::component::Component;
-use rand::{thread_rng, Rng};
 
 #[derive(Component)]
 pub struct Nanite {
@@ -15,16 +14,6 @@ impl Nanite {
             nanite_capacity: 20.0,
             nanite_total: 0.0,
             transient_nanites: 0.0,
-        }
-    }
-
-    pub fn new_rand_filled() -> Self {
-        let mut rng = thread_rng();
-        
-        Self { 
-            nanite_capacity: 20.0, 
-            nanite_total: 20.0 * rng.gen_range(0.0..1.0), 
-            transient_nanites: 0.0
         }
     }
 

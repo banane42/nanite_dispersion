@@ -1,4 +1,4 @@
-use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, component::Component, query::{With, Changed}}, transform::components::Transform, math::{Quat, EulerRot}, text::Text, render::view::Visibility, ui::{Interaction, BackgroundColor, BorderColor, widget::Button}, input::{mouse::MouseButton, Input}};
+use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed}}, transform::components::Transform, math::{Quat, EulerRot}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
 use crate::{resources::{Weather, GameEntitiesClickable}, components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick}}};
 
 pub fn update_compass(

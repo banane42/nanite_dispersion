@@ -15,6 +15,13 @@ impl Default for GameEntitiesClickable {
     }
 }
 
+#[derive(Resource, Default, Debug, PartialEq)]
+pub enum MapState {
+    #[default]
+    Terrain, 
+    Nanite
+}
+
 #[derive(PartialEq, Debug)]
 pub enum HexDirection {
     TopLeft,

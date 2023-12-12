@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{resources::{MouseWorldCoords, Weather}, components::clickable::{Clickable, OnClickEvents}};
+use crate::{resources::{MouseWorldCoords, Weather, MapState}, components::clickable::{Clickable, OnClickEvents}};
 
 use super::startup_systems::MainCamera;
 
@@ -22,6 +22,7 @@ pub fn calc_world_coords(
 
 pub fn keyboard_input(
     keys: Res<Input<KeyCode>>,
+    mut map_state: ResMut<MapState>,
     mut weather: ResMut<Weather>,
     mut camera_q: Query<(&mut Transform, &MainCamera)>
 ) {
@@ -46,6 +47,15 @@ pub fn keyboard_input(
         weather.debug_wind_adj(true);
     } else if keys.just_released(KeyCode::Right) {
         weather.debug_wind_adj(false);
+    }
+
+    //TODO Remove Test
+    if keys.just_released(KeyCode::Space) {
+        let state = map_state.as_ref().clone();
+        match state {
+            MapState::Terrain => *map_state = MapState::Nanite,
+            MapState::Nanite => *map_state = MapState::Terrain,
+        }
     }
 
 }
