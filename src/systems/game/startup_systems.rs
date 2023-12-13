@@ -49,7 +49,7 @@ pub fn setup(
     });
 
     commands.init_resource::<GameEntitiesClickable>();
-    commands.init_resource::<MapState>()
+    commands.init_resource::<MapState>();
 }
 
 pub fn setup_camera(
@@ -148,6 +148,7 @@ pub fn spawn_hexagons(
 
     commands.insert_resource(HexGrid {
         grid: hex_grid,
+        selected_pos: None
     })
 
 }

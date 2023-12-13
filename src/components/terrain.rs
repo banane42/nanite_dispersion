@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use bevy::ecs::component::Component;
 use bevy::render::color::Color;
 use rand::Rng;
@@ -13,6 +14,15 @@ impl Terrain {
         match rng.gen_range(0..=1) {
             0 => Terrain::Land,
             _ => Terrain::Water
+        }
+    }
+}
+
+impl Display for Terrain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Terrain::Land => write!(f, "Land"),
+            Terrain::Water => write!(f, "Water"),
         }
     }
 }

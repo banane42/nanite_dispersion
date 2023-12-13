@@ -49,7 +49,8 @@ impl HexDirection {
 
 #[derive(Resource)]
 pub struct HexGrid {
-    pub grid: Vec<Vec<Entity>>
+    pub grid: Vec<Vec<Entity>>,
+    pub selected_pos: Option<(usize, usize)>
 }
 
 impl HexGrid {
@@ -69,6 +70,26 @@ impl HexGrid {
     const MASK_ODD_BOTTOM_RIGHT: (i32, i32) = (-1, 0);
     const MASK_ODD_BOTTOM_LEFT: (i32, i32) = (-1, -1);
     const MASK_ODD_LEFT: (i32, i32) = (0, -1);
+
+    pub fn select_pos(&mut self, pos: (usize, usize)) {
+        self.selected_pos = Some(pos);
+    }
+
+    pub fn deselect_pos(&mut self) {
+        self.selected_pos = None;
+    }
+
+    pub fn get_selected(&self) -> Option<Entity> {
+        let (row, col) = match self.selected_pos {
+            Some(p) => p,
+            None => return None,
+        };
+        self.grid.get(row)?.get(col).cloned()
+    }
+
+    pub fn has_selected(&self) -> bool {
+        self.selected_pos.is_some()
+    }
 
     pub fn get_neigbors(&self, grid_pos: &GridPos) -> HexNeighbors {
         let pos = grid_pos.to_int();
