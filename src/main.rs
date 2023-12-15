@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use components::clickable::OnClickEvents;
-use resources::{GameEntitiesClickable, MapState};
-use systems::{game::{startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, continuous_systems::map_state_material_static}, game::input_systems::{calc_world_coords, on_game_entity_click, keyboard_input, mouse_input, zoom_camera}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_hex_click, ui_button_system, reset_game_entities_clickable, update_nanite_info_pane}}};
+use resources::{input::GameEntitiesClickable, hex::{MapState, HexGrid}, asset_handles::LoadingStates};
+use systems::{game::{startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, continuous_systems::map_state_material_static}, game::{input_systems::{calc_world_coords, on_game_entity_click, keyboard_input, mouse_input, zoom_camera}, startup_systems::create_colliders}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_hex_click, ui_button_system, reset_game_entities_clickable, update_nanite_info_pane}}};
 
 mod resources;
 mod systems;
 mod components;
+mod bundles;
 
 fn main() {
 
@@ -44,7 +45,7 @@ fn main() {
             resource_exists::<MapState>().and_then(|state: Res<MapState>| *state == MapState::Nanite))
         )
         .add_systems(Last, update_compass)
-        .add_systems(Last, update_nanite_info_pane)
+        .add_systems(Last, update_nanite_info_pane.run_if(right_panel_open))
         .add_systems(Last, reset_game_entities_clickable)
         .run();
 }
@@ -70,4 +71,8 @@ fn map_state_changed(
     map_state: Res<MapState>
 ) -> bool {
     map_state.is_changed()
+}
+
+fn right_panel_open(hex_grid: Res<HexGrid>) -> bool {
+    hex_grid.has_selected()
 }

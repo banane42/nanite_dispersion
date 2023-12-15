@@ -1,5 +1,6 @@
-use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}}, transform::components::Transform, math::{Quat, EulerRot}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
-use crate::{resources::{Weather, GameEntitiesClickable, MapState, HexGrid}, components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::{Nanite, self}}};
+use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}, entity::Entity}, transform::components::Transform, math::{Quat, EulerRot}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
+use bevy_rapier2d::plugin::RapierContext;
+use crate::{components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::GameEntitiesClickable}};
 
 pub fn update_compass(
     weather: Res<Weather>,
@@ -34,11 +35,13 @@ pub fn update_nanite_info_pane(
 
 pub fn ui_hex_click(
     mut hex_grid: ResMut<HexGrid>,
+    rapier_context: Res<RapierContext>,
     mut reader: EventReader<OnClickEvents>,
     hex_q: Query<(&GridPos, &Terrain)>,
     mut pos_text_q: Query<&mut Text, (With<HexPosText>, Without<HexTerrainText>)>,
     mut terrain_text_q: Query<&mut Text, (With<HexTerrainText>, Without<HexPosText>)>,
-    mut info_pane_q: Query<&mut Visibility, With<RightInfoPane>>
+    mut info_pane_q: Query<&mut Visibility, With<RightInfoPane>>,
+    test_q: Query<(Option<&Nanite>, Option<&Macc>)>
 ) {
     for event in reader.read() {
         match event {
@@ -49,12 +52,37 @@ pub fn ui_hex_click(
                         pos_text.sections.first_mut().unwrap().value = format!("Coordinates\n{}", grid_pos.to_string());
                         terrain_text.sections.first_mut().unwrap().value = format!("Terrain Type\n{}", terrain.to_string());
                         hex_grid.select_pos(grid_pos.pos.clone());
+                        get_maccs_in_hex(&rapier_context, *ent, &test_q);
                     },
                     _ => {}
                 }
             }
         }
     }
+}
+
+fn get_maccs_in_hex(
+    rapier_context: &RapierContext,
+    hex_ent: Entity,
+    test_q: &Query<(Option<&Nanite>, Option<&Macc>)>
+) {
+    println!("Hex Ent: {:?}", hex_ent);
+    for (ent1, ent2, bool) in rapier_context.intersections_with(hex_ent) {
+        match test_q.get(ent1) {
+            Ok(res) => {
+                println!("Test Ent 1: {:?} Nanite: {:?}, Macc: {:?}", ent1, res.0.is_some(), res.1.is_none());
+            },
+            Err(err) => println!("Error on ent1: {}", err),
+        };
+        match test_q.get(ent2) {
+            Ok(res) => {
+                println!("Test Ent 2: {:?} Nanite: {:?}, Macc: {:?}", ent2, res.0.is_some(), res.1.is_some());
+            },
+            Err(err) => println!("Error on ent2: {}", err),
+        };
+        println!("Bool: {}", bool)
+    }
+    println!("<--------------------------------->");
 }
 
 pub fn ui_button_system(

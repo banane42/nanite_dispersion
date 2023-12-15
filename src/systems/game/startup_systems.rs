@@ -1,7 +1,8 @@
-use bevy::{ecs::{component::Component, system::{Commands, ResMut, Resource, Res}, entity::Entity}, core_pipeline::{core_2d::{Camera2dBundle, Camera2d}, clear_color::ClearColorConfig}, prelude::default, render::{color::Color, mesh::{Mesh, shape}}, math::{Vec2, Vec3}, sprite::{Mesh2dHandle, ColorMaterial, MaterialMesh2dBundle}, asset::Assets, transform::components::Transform, hierarchy::BuildChildren};
-use bevy_rapier2d::geometry::Collider;
+use bevy::{ecs::{component::Component, system::{Commands, ResMut, Res}, entity::Entity, schedule::{States, State, NextState}}, core_pipeline::{core_2d::{Camera2dBundle, Camera2d}, clear_color::ClearColorConfig}, prelude::default, render::{color::Color, mesh::{Mesh, shape}, texture::Image}, math::{Vec2, Vec3}, sprite::{Mesh2dHandle, ColorMaterial, MaterialMesh2dBundle}, asset::{Assets, AssetServer, Handle}, transform::components::Transform, hierarchy::BuildChildren};
+use bevy_rapier2d::geometry::{Sensor, Collider};
+use bevy_rapier_collider_gen::single_polyline_collider_translated;
 
-use crate::{resources::{MouseWorldCoords, HexGrid, Weather, NaniteReserve, GameEntitiesClickable, MapState}, components::{nanite::Nanite, grid_pos::GridPos, clickable::{Clickable, OnClickEvents}, terrain::Terrain}};
+use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates, self}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -80,60 +81,43 @@ pub fn setup_camera(
 
 pub fn setup_assets(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     //Meshes
     let outer_shape: Mesh = shape::RegularPolygon::new(50., 6).into(); 
-    let collider_positions: Vec<Vec2> = outer_shape.attribute(Mesh::ATTRIBUTE_POSITION).unwrap().as_float3().unwrap().iter()
-    .map(|x| {
-        Vec2 {
-            x: x[0],
-            y: x[1],
-        }
-    }).collect();
 
     let outer_shape_handle = meshes.add(outer_shape);
     let inner_shape_handle: Mesh2dHandle = meshes.add(shape::RegularPolygon::new(49., 6).into()).into();
 
-    commands.insert_resource(MeshHandles {
+    let macc_handle: Handle<Image> = asset_server.load("macc.png");
+
+    let color_handle_white = materials.add(ColorMaterial::from(Color::WHITE));
+
+    commands.insert_resource(AssetHandles {
         out_hex_handle: outer_shape_handle.into(),
         inner_hex_handle: inner_shape_handle,
-        hex_collider_positions: collider_positions,
-    })
+        macc_image_handle: macc_handle,
+        color_handle_white: color_handle_white,
+    });
 }
 
 pub fn spawn_hexagons(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mesh_handles: Res<MeshHandles>
+    asset_handles: Res<AssetHandles>,
+    colliders: Res<ColliderAssets>
 ) {
     let grid_width: usize = 16;
-    let size: f32 = 50.0;
-    let w = 3.0_f32.sqrt() * size;
-    let h = 2.0 * size;
 
     let hex_grid: Vec<Vec<Entity>> = (0..grid_width).map(|row| {
         (0..grid_width).map(|col| {
+            let hex_bundle = HexBundle::new(row, col, &asset_handles, &colliders);
             
-            let ent = commands.spawn((MaterialMesh2dBundle {
-                mesh: mesh_handles.get_out_hex_handle(),
-                material: materials.add(ColorMaterial::from(Color::WHITE)),
-                transform: Transform::from_translation(Vec3 {
-                    x: (col as f32 * w - ((row % 2) as f32 * (w * 0.5))),
-                    y: (row as f32 * h * 0.75),
-                    z: 0.,
-                }),
-                ..default()
-            },
-            Collider::convex_polyline(mesh_handles.get_hex_collider_positions()).unwrap(),
-            GridPos {
-                pos: (row, col),
-            },
-            Nanite::new_empty(),
-            Terrain::from_random(),
-            )).with_children(|parent| {
+            let ent = commands.spawn((hex_bundle, Sensor)).with_children(|parent| {
                 parent.spawn(MaterialMesh2dBundle {
-                    mesh: mesh_handles.get_inner_hex_handle(),
+                    mesh: asset_handles.get_inner_hex_handle(),
                     material: materials.add(ColorMaterial::from(Color::GRAY)),
                     transform: Transform::from_translation(Vec3::new(0., 0., 1.0)),
                     ..default()
@@ -149,27 +133,48 @@ pub fn spawn_hexagons(
     commands.insert_resource(HexGrid {
         grid: hex_grid,
         selected_pos: None
-    })
+    });
+
+    commands.spawn(MaccBundle::new(Vec2 {
+        x: 0.0,
+        y: 0.0,
+    }, asset_handles.get_sprite_handle_macc(), colliders.get_macc()));
 
 }
 
-#[derive(Resource)]
-pub struct MeshHandles {
-    out_hex_handle: Mesh2dHandle,
-    inner_hex_handle: Mesh2dHandle,
-    hex_collider_positions: Vec<Vec2>
-}
+pub fn create_colliders(
+    mut commands: Commands,
+    images: ResMut<Assets<Image>>,
+    asset_handles: Res<AssetHandles>,
+    meshes: Res<Assets<Mesh>>,
+    mut loading_state: ResMut<NextState<LoadingStates>>
+) {
+    let hex_collider = match meshes.get(asset_handles.get_out_hex_handle().0) {
+        Some(mesh) => {
+            let collider_positions: Vec<Vec2> = mesh.attribute(Mesh::ATTRIBUTE_POSITION).unwrap().as_float3().unwrap().iter()
+            .map(|x| {
+                Vec2 {
+                    x: x[0],
+                    y: x[1],
+                }
+            }).collect();
+            Collider::convex_polyline(collider_positions).unwrap()
+        },
+        None => return,
+    };
 
-impl MeshHandles {
-    pub fn get_out_hex_handle(&self) -> Mesh2dHandle {
-        self.out_hex_handle.clone()
-    }
+    let macc_collider = match images.get(asset_handles.get_sprite_handle_macc()) {
+        Some(img) => {
+            single_polyline_collider_translated(img)
+        },
+        None => return,
+    };
 
-    pub fn get_inner_hex_handle(&self) -> Mesh2dHandle {
-        self.inner_hex_handle.clone()
-    }
+    commands.insert_resource(ColliderAssets {
+        macc_collider,
+        hex_collider
+    });
 
-    pub fn get_hex_collider_positions(&self) -> Vec<Vec2> {
-        self.hex_collider_positions.clone()
-    }
+    loading_state.set(LoadingStates::Complete);
+
 }

@@ -1,19 +1,7 @@
-use bevy::{ecs::{system::Resource, entity::Entity}, math::Vec2};
+use bevy::ecs::{system::Resource, entity::Entity};
 use rand::{thread_rng, Rng};
 
 use crate::components::grid_pos::GridPos;
-
-#[derive(Resource, Default)]
-pub struct MouseWorldCoords(pub Vec2);
-
-#[derive(Resource)]
-pub struct GameEntitiesClickable(pub bool);
-
-impl Default for GameEntitiesClickable {
-    fn default() -> Self {
-        GameEntitiesClickable(true)
-    }
-}
 
 #[derive(Resource, Default, Debug, PartialEq)]
 pub enum MapState {
@@ -54,6 +42,8 @@ pub struct HexGrid {
 }
 
 impl HexGrid {
+
+    pub const HEX_RADIUS: f32 = 50.0;
 
     //Even Masks
     const MASK_EVEN_TOP_LEFT: (i32, i32) = (1, 0);
@@ -299,40 +289,5 @@ impl NaniteReserve {
         let amount = self.amount * rng.gen_range(0.0..1.0);
         self.amount -= amount;
         amount
-    }
-}
-
-#[derive(Resource)]
-pub struct Weather {
-    pub wind_strength: f32,
-    pub wind_direction: f32
-}
-
-impl Weather {
-    pub fn adjust_wind(&mut self) {
-        let mut rng = thread_rng();
-        let mut dir = self.wind_direction + rng.gen_range(-90.0..90.0);
-        if dir < 0.0 {
-            dir += 360.0;
-        } else if dir > 360.0 {
-            dir -= 360.0;
-        }
-        println!("Adjusting wind to {}", dir);
-        self.wind_direction = dir;
-    }
-
-    pub fn debug_wind_adj(&mut self, left: bool) {
-        let mut dir = if left {
-            self.wind_direction - 40.0
-        } else {
-            self.wind_direction + 40.0
-        };
-        if dir < 0.0 {
-            dir += 360.0
-        } else if dir > 360.0 {
-            dir -= 360.0
-        }
-        println!("Adjusting wind to {:?}:  {}", HexDirection::from_angle(dir), dir);
-        self.wind_direction = dir;
     }
 }

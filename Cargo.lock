@@ -758,6 +758,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_rapier_collider_gen"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0deaa4196b9db4c33d82bf4da065f5a1e9a6b16ad6fafc43aa0bebc27491bf12"
+dependencies = [
+ "bevy",
+ "bevy_rapier2d",
+]
+
+[[package]]
 name = "bevy_reflect"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2349,7 +2359,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_rapier2d",
- "petgraph",
+ "bevy_rapier_collider_gen",
  "rand",
 ]
 

@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{resources::{MouseWorldCoords, Weather}, components::clickable::{Clickable, OnClickEvents}};
+use crate::{components::clickable::{Clickable, OnClickEvents}, resources::{input::MouseWorldCoords, weather::Weather}};
 
 use super::startup_systems::MainCamera;
 

@@ -1,6 +1,6 @@
 use bevy::ecs::component::Component;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Nanite {
     pub nanite_capacity: f32,
     pub nanite_total: f32,

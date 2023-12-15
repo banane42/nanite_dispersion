@@ -13,4 +13,4 @@ opt-level = 3
 bevy = "0.12.0"
 bevy_rapier2d = "0.23.0"
 rand = "0.8.5"
-petgraph = "0.6.4"
+bevy_rapier_collider_gen = "0.3.1"
