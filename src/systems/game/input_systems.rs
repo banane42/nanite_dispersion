@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{components::clickable::{Clickable, OnClickEvents}, resources::{input::MouseWorldCoords, weather::Weather}};
+use crate::{components::clickable::{Clickable, OnClickEvents}, resources::input::MouseWorldCoords};
 
 use super::startup_systems::MainCamera;
 
@@ -22,7 +22,6 @@ pub fn calc_world_coords(
 
 pub fn keyboard_input(
     keys: Res<Input<KeyCode>>,
-    mut weather: ResMut<Weather>,
     mut camera_q: Query<(&mut Transform, &MainCamera)>
 ) {
     let (mut camera_trans, camera) = camera_q.get_single_mut().unwrap();
@@ -39,13 +38,6 @@ pub fn keyboard_input(
         camera_trans.translation -= Vec3::X * camera.translation_speed;
     } else if keys.pressed(KeyCode::D) {
         camera_trans.translation += Vec3::X * camera.translation_speed;
-    }
-
-    //TODO Remove test
-    if keys.just_released(KeyCode::Left) {
-        weather.debug_wind_adj(true);
-    } else if keys.just_released(KeyCode::Right) {
-        weather.debug_wind_adj(false);
     }
 
 }
@@ -84,8 +76,9 @@ pub fn on_game_entity_click(
             |entity| {
                 match clickable_q.get(entity) {
                     Ok(clickable) => {
+                        println!("Sending click event");
                         event_writer.send(clickable.get_event());
-                        false
+                        true
                     },
                     Err(_) => true,
                 }

@@ -1,8 +1,8 @@
-use bevy::{ecs::{component::Component, system::{Commands, ResMut, Res}, entity::Entity, schedule::{States, State, NextState}}, core_pipeline::{core_2d::{Camera2dBundle, Camera2d}, clear_color::ClearColorConfig}, prelude::default, render::{color::Color, mesh::{Mesh, shape}, texture::Image}, math::{Vec2, Vec3}, sprite::{Mesh2dHandle, ColorMaterial, MaterialMesh2dBundle}, asset::{Assets, AssetServer, Handle}, transform::components::Transform, hierarchy::BuildChildren};
+use bevy::{ecs::{component::Component, system::{Commands, ResMut, Res}, entity::Entity, schedule::NextState}, core_pipeline::{core_2d::{Camera2dBundle, Camera2d}, clear_color::ClearColorConfig}, prelude::default, render::{color::Color, mesh::{Mesh, shape}, texture::Image}, math::{Vec2, Vec3}, sprite::{Mesh2dHandle, ColorMaterial, MaterialMesh2dBundle}, asset::{Assets, AssetServer, Handle}, transform::components::Transform, hierarchy::BuildChildren};
 use bevy_rapier2d::geometry::{Sensor, Collider};
-use bevy_rapier_collider_gen::single_polyline_collider_translated;
+use bevy_rapier_collider_gen::single_convex_polyline_collider_translated;
 
-use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates, self}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
+use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -135,10 +135,12 @@ pub fn spawn_hexagons(
         selected_pos: None
     });
 
-    commands.spawn(MaccBundle::new(Vec2 {
+    let macc_ent = commands.spawn(MaccBundle::new(Vec2 {
         x: 0.0,
         y: 0.0,
-    }, asset_handles.get_sprite_handle_macc(), colliders.get_macc()));
+    }, asset_handles.get_sprite_handle_macc(), colliders.get_macc())).id();
+
+    commands.entity(macc_ent).insert(Clickable::new(OnClickEvents::MaccEvent(macc_ent)));
 
 }
 
@@ -165,7 +167,7 @@ pub fn create_colliders(
 
     let macc_collider = match images.get(asset_handles.get_sprite_handle_macc()) {
         Some(img) => {
-            single_polyline_collider_translated(img)
+            single_convex_polyline_collider_translated(img).unwrap()
         },
         None => return,
     };

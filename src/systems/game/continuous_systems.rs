@@ -1,7 +1,7 @@
-use bevy::{ecs::{system::{Query, ResMut, Res}, query::Changed, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color};
+use bevy::{ecs::{system::{Query, ResMut, Res}, query::{Changed, With}, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color, input::{keyboard::KeyCode, Input}, transform::components::Transform};
 use rand::{thread_rng, Rng, seq::SliceRandom};
 
-use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather}};
+use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain, macc::Macc}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather}};
 
 pub fn nanite_wind(
     hex_grid: Res<HexGrid>,
@@ -64,7 +64,7 @@ pub fn nanite_introduction(
     let mut nanite_pool = nanite_reserve.pull();
     let edges = hex_grid.direction_edges(weather.wind_direction + 180.0);
 
-    while nanite_pool > 0.0 {
+    while nanite_pool > 0.0 && !edges.is_empty() {
         let ent = edges.choose(&mut rng).unwrap();
         let mut nanite = nanite_q.get_mut(*ent).unwrap();
         
@@ -150,5 +150,31 @@ pub fn nanite_material_update(
                 }
             }
         });
+    }
+}
+
+pub fn test_coll(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut q: Query<&mut Transform, With<Macc>>
+) {
+    let angle: f32 = if keyboard_input.pressed(KeyCode::Left) {
+        1.0
+    } else if keyboard_input.pressed(KeyCode::Right) {
+        -1.0
+    } else {
+        0.0
+    };
+
+    let direction: f32 = if keyboard_input.pressed(KeyCode::Up) {
+        1.0
+    } else if keyboard_input.pressed(KeyCode::Down) {
+        -1.0
+    } else {
+        0.0
+    };
+
+    for mut trans in q.iter_mut() {
+        trans.rotate_z(angle.to_radians());
+        trans.translation = trans.translation + (trans.up() * direction);
     }
 }

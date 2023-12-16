@@ -1,10 +1,10 @@
-use bevy::{ecs::{system::Resource, schedule::States}, sprite::{Mesh2dHandle, ColorMaterial}, math::Vec2, render::texture::Image, asset::Handle};
+use bevy::{ecs::{system::Resource, schedule::States}, sprite::{Mesh2dHandle, ColorMaterial}, render::texture::Image, asset::Handle};
 use bevy_rapier2d::geometry::Collider;
 
 #[derive(States, Default, Debug, Hash, Eq, PartialEq, Clone)]
 pub enum LoadingStates {
     #[default]
-    Loading, 
+    Loading,
     Complete
 }
 

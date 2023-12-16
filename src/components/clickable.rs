@@ -2,7 +2,8 @@ use bevy::ecs::{component::Component, event::Event, entity::Entity};
 
 #[derive(Event, Clone)]
 pub enum OnClickEvents {
-    HexEvent(Entity)
+    HexEvent(Entity),
+    MaccEvent(Entity)
 }
 
 #[derive(Component)]

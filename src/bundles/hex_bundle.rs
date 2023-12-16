@@ -1,5 +1,5 @@
 use bevy::{sprite::{MaterialMesh2dBundle, ColorMaterial}, prelude::default, transform::components::Transform, math::Vec3, ecs::bundle::Bundle};
-use bevy_rapier2d::geometry::Collider;
+use bevy_rapier2d::geometry::{Collider, CollisionGroups, Group};
 
 use crate::{components::{grid_pos::GridPos, terrain::Terrain, nanite::Nanite}, resources::{asset_handles::{AssetHandles, ColliderAssets}, hex::HexGrid}};
 
@@ -9,7 +9,8 @@ pub struct HexBundle {
     collider: Collider,
     grid_pos: GridPos,
     nanite: Nanite,
-    terrain: Terrain
+    terrain: Terrain,
+    collision_group: CollisionGroups
 }
 
 impl HexBundle {
@@ -30,7 +31,10 @@ impl HexBundle {
             collider: colliders.get_hex(),
             grid_pos: GridPos { pos: (row, col) }, 
             nanite: Nanite::new_empty(), 
-            terrain: Terrain::from_random()
+            terrain: Terrain::from_random(),
+            collision_group: CollisionGroups::new(
+                Group::GROUP_1, Group::ALL
+            )
         }
     }
 }

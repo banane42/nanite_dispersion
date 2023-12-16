@@ -1,5 +1,5 @@
-use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}, entity::Entity}, transform::components::Transform, math::{Quat, EulerRot}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
-use bevy_rapier2d::plugin::RapierContext;
+use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}}, transform::components::Transform, math::{Quat, EulerRot, Vec2}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
+use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter, geometry::{Collider, CollisionGroups, Group}};
 use crate::{components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::GameEntitiesClickable}};
 
 pub fn update_compass(
@@ -37,7 +37,7 @@ pub fn ui_hex_click(
     mut hex_grid: ResMut<HexGrid>,
     rapier_context: Res<RapierContext>,
     mut reader: EventReader<OnClickEvents>,
-    hex_q: Query<(&GridPos, &Terrain)>,
+    hex_q: Query<(&GridPos, &Terrain, &Transform, &Collider)>,
     mut pos_text_q: Query<&mut Text, (With<HexPosText>, Without<HexTerrainText>)>,
     mut terrain_text_q: Query<&mut Text, (With<HexTerrainText>, Without<HexPosText>)>,
     mut info_pane_q: Query<&mut Visibility, With<RightInfoPane>>,
@@ -46,16 +46,25 @@ pub fn ui_hex_click(
     for event in reader.read() {
         match event {
             OnClickEvents::HexEvent(ent) => {
+                println!("Clicked Hex");
                 match (hex_q.get(*ent), pos_text_q.get_single_mut(), terrain_text_q.get_single_mut(), info_pane_q.get_single_mut()) {
-                    (Ok((grid_pos, terrain)), Ok(mut pos_text), Ok(mut terrain_text), Ok(mut info_pane_vis)) => {
+                    (Ok((grid_pos, terrain, hex_trans, hex_coll)), Ok(mut pos_text), Ok(mut terrain_text), Ok(mut info_pane_vis)) => {
                         *info_pane_vis = Visibility::Visible;
                         pos_text.sections.first_mut().unwrap().value = format!("Coordinates\n{}", grid_pos.to_string());
                         terrain_text.sections.first_mut().unwrap().value = format!("Terrain Type\n{}", terrain.to_string());
                         hex_grid.select_pos(grid_pos.pos.clone());
-                        get_maccs_in_hex(&rapier_context, *ent, &test_q);
+                        get_maccs_in_hex(
+                            &rapier_context, 
+                            hex_coll, 
+                            hex_trans.translation.truncate(),
+                            &test_q
+                        );
                     },
                     _ => {}
                 }
+            },
+            OnClickEvents::MaccEvent(ent) => {
+                println!("Clicked MACC");
             }
         }
     }
@@ -63,26 +72,20 @@ pub fn ui_hex_click(
 
 fn get_maccs_in_hex(
     rapier_context: &RapierContext,
-    hex_ent: Entity,
+    hex_collider: &Collider,
+    hex_pos: Vec2,
     test_q: &Query<(Option<&Nanite>, Option<&Macc>)>
 ) {
-    println!("Hex Ent: {:?}", hex_ent);
-    for (ent1, ent2, bool) in rapier_context.intersections_with(hex_ent) {
-        match test_q.get(ent1) {
-            Ok(res) => {
-                println!("Test Ent 1: {:?} Nanite: {:?}, Macc: {:?}", ent1, res.0.is_some(), res.1.is_none());
-            },
-            Err(err) => println!("Error on ent1: {}", err),
-        };
-        match test_q.get(ent2) {
-            Ok(res) => {
-                println!("Test Ent 2: {:?} Nanite: {:?}, Macc: {:?}", ent2, res.0.is_some(), res.1.is_some());
-            },
-            Err(err) => println!("Error on ent2: {}", err),
-        };
-        println!("Bool: {}", bool)
-    }
-    println!("<--------------------------------->");
+    rapier_context.intersections_with_shape(
+        hex_pos, 
+        0.0, 
+        hex_collider, 
+        QueryFilter::default().groups(CollisionGroups::new(Group::ALL, Group::GROUP_2)), 
+        |ent| {
+            println!("Get Maccs result\n{:?}", test_q.get(ent));
+            true
+        }
+    );
 }
 
 pub fn ui_button_system(

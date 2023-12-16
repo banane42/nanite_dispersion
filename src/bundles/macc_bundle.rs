@@ -1,14 +1,15 @@
 use bevy::{ecs::bundle::Bundle, prelude::default, sprite::SpriteBundle, math::{Vec2, Vec3}, transform::components::Transform, asset::Handle, render::texture::Image};
-use bevy_rapier2d::geometry::Collider;
+use bevy_rapier2d::geometry::{Collider, CollisionGroups, Group};
 
-use crate::{components::macc::{Team, Macc}, resources::asset_handles::{AssetHandles, ColliderAssets}};
+use crate::components::macc::{Team, Macc};
 
 #[derive(Bundle)]
 pub struct MaccBundle {
     team: Team,
     macc: Macc,
     sprite: SpriteBundle,
-    collider: Collider
+    collider: Collider,
+    collision_group: CollisionGroups
 }
 
 impl MaccBundle {
@@ -23,13 +24,15 @@ impl MaccBundle {
             texture: sprite,
             ..default()
         };
-        
 
         Self {
             team: Team::A,
             macc: Macc {},
             sprite: sprite,
-            collider: collider
+            collider: collider,
+            collision_group: CollisionGroups::new(
+                Group::GROUP_2, Group::ALL
+            )
         }
     }
 }
