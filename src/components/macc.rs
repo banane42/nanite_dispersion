@@ -1,4 +1,4 @@
-use bevy::ecs::{component::Component, entity::Entity};
+use bevy::ecs::component::Component;
 
 #[derive(Component)]
 pub enum Team {
@@ -10,7 +10,7 @@ pub struct Macc {
 
 }
 
-#[derive(Component)]
-pub struct MaccInfo {
-    maccs: Vec<Entity>
-}
+// #[derive(Component)]
+// pub struct MaccInfo {
+//     maccs: Vec<Entity>
+// }

@@ -1,23 +1,14 @@
-use bevy::ecs::{component::Component, event::Event, entity::Entity};
+use bevy::{ecs::{component::Component, event::Event, entity::Entity}, input::mouse::MouseButton};
 
 #[derive(Event, Clone)]
-pub enum OnClickEvents {
-    HexEvent(Entity),
-    MaccEvent(Entity)
+pub struct OnClickEvent {
+    pub signal: ClickSignal,
+    pub mouse_button: MouseButton,
+    pub entity: Entity
 }
 
-#[derive(Component)]
-pub struct Clickable {
-    event: OnClickEvents,
-}
-
-impl Clickable {
-
-    pub fn new(event: OnClickEvents) -> Self {
-        Self { event: event }
-    }
-
-    pub fn get_event(&self) -> OnClickEvents {
-        self.event.clone()
-    }
+#[derive(Component, Clone)]
+pub enum ClickSignal {
+    Hex,
+    Macc
 }

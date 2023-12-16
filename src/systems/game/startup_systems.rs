@@ -2,7 +2,7 @@ use bevy::{ecs::{component::Component, system::{Commands, ResMut, Res}, entity::
 use bevy_rapier2d::geometry::{Sensor, Collider};
 use bevy_rapier_collider_gen::single_convex_polyline_collider_translated;
 
-use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords, SelectedMacc}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
+use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords, SelectedMacc}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::ClickSignal};
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -125,7 +125,7 @@ pub fn spawn_hexagons(
                 });
             }).id();
 
-            commands.entity(ent).insert(Clickable::new(OnClickEvents::HexEvent(ent)));
+            commands.entity(ent).insert(ClickSignal::Hex);
 
             ent
         }).collect()
@@ -140,13 +140,13 @@ pub fn spawn_hexagons(
         x: 0.0,
         y: 0.0,
     }, asset_handles.get_sprite_handle_macc(), colliders.get_macc())).id();
-    commands.entity(macc_1).insert(Clickable::new(OnClickEvents::MaccEvent(macc_1)));
+    commands.entity(macc_1).insert(ClickSignal::Macc);
 
     let macc_2 = commands.spawn(MaccBundle::new(Vec2 {
         x: 5.0,
         y: 0.0,
     }, asset_handles.get_sprite_handle_macc(), colliders.get_macc())).id();
-    commands.entity(macc_2).insert(Clickable::new(OnClickEvents::MaccEvent(macc_2)));
+    commands.entity(macc_2).insert(ClickSignal::Macc);
 }
 
 pub fn create_colliders(

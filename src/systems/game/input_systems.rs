@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{components::clickable::{Clickable, OnClickEvents}, resources::input::MouseWorldCoords};
+use crate::{resources::input::MouseWorldCoords, components::clickable::{OnClickEvent, ClickSignal}};
 
 use super::startup_systems::MainCamera;
 
@@ -67,22 +67,28 @@ pub fn on_game_entity_click(
     mouse_wrld_coords: Res<MouseWorldCoords>,
     mouse_input: Res<Input<MouseButton>>,
     rapier_context: Res<RapierContext>,
-    mut event_writer: EventWriter<OnClickEvents>,
-    clickable_q: Query<&Clickable>
+    mut event_writer: EventWriter<OnClickEvent>,
+    click_signal_q: Query<&ClickSignal>
 ) {
-    if mouse_input.just_released(MouseButton::Left) {
+    mouse_input.get_just_released().filter(|x| {
+        [MouseButton::Left, MouseButton::Right].contains(x)
+    }).for_each(|input| {
         rapier_context.intersections_with_point(
             mouse_wrld_coords.0, 
             QueryFilter::default(), 
             |entity| {
-                match clickable_q.get(entity) {
-                    Ok(clickable) => {
+                match click_signal_q.get(entity) {
+                    Ok(signal) => {
                         println!("Sending click event");
-                        event_writer.send(clickable.get_event());
+                        event_writer.send(OnClickEvent { 
+                            signal: signal.clone(), 
+                            mouse_button: input.clone(), 
+                            entity: entity
+                        });
                         true
                     },
                     Err(_) => true,
                 }
             })
-    }
+    });
 }
