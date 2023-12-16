@@ -25,6 +25,7 @@ pub fn keyboard_input(
     mut camera_q: Query<(&mut Transform, &MainCamera)>
 ) {
     let (mut camera_trans, camera) = camera_q.get_single_mut().unwrap();
+    
     //Movement Input
     // Forward/Backward
     if keys.pressed(KeyCode::W) {

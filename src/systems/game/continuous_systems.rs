@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{Query, ResMut, Res}, query::{Changed, With}, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color, input::{keyboard::KeyCode, Input}, transform::components::Transform};
 use rand::{thread_rng, Rng, seq::SliceRandom};
 
-use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain, macc::Macc}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather}};
+use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain, macc::Macc}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather, input::SelectedMacc}};
 
 pub fn nanite_wind(
     hex_grid: Res<HexGrid>,
@@ -155,8 +155,17 @@ pub fn nanite_material_update(
 
 pub fn test_coll(
     keyboard_input: Res<Input<KeyCode>>,
+    selected_macc: Res<SelectedMacc>,
     mut q: Query<&mut Transform, With<Macc>>
 ) {
+
+    let mut trans = match selected_macc.macc {
+        Some(macc) => match q.get_mut(macc) {
+            Ok(t) => t,
+            Err(_) => return,
+        },
+        None => return,
+    };
     let angle: f32 = if keyboard_input.pressed(KeyCode::Left) {
         1.0
     } else if keyboard_input.pressed(KeyCode::Right) {
@@ -173,8 +182,6 @@ pub fn test_coll(
         0.0
     };
 
-    for mut trans in q.iter_mut() {
-        trans.rotate_z(angle.to_radians());
-        trans.translation = trans.translation + (trans.up() * direction);
-    }
+    trans.rotate_z(angle.to_radians());
+    trans.translation = trans.translation + (trans.up() * direction);
 }

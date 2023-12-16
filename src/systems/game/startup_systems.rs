@@ -2,7 +2,7 @@ use bevy::{ecs::{component::Component, system::{Commands, ResMut, Res}, entity::
 use bevy_rapier2d::geometry::{Sensor, Collider};
 use bevy_rapier_collider_gen::single_convex_polyline_collider_translated;
 
-use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
+use crate::{resources::{weather::Weather, hex::{NaniteReserve, MapState, HexGrid}, input::{GameEntitiesClickable, MouseWorldCoords, SelectedMacc}, asset_handles::{AssetHandles, ColliderAssets, LoadingStates}}, bundles::{hex_bundle::HexBundle, macc_bundle::MaccBundle}, components::clickable::{Clickable, OnClickEvents}};
 
 #[derive(Component)]
 pub struct MainCamera {
@@ -51,6 +51,7 @@ pub fn setup(
 
     commands.init_resource::<GameEntitiesClickable>();
     commands.init_resource::<MapState>();
+    commands.init_resource::<SelectedMacc>()
 }
 
 pub fn setup_camera(
@@ -135,13 +136,17 @@ pub fn spawn_hexagons(
         selected_pos: None
     });
 
-    let macc_ent = commands.spawn(MaccBundle::new(Vec2 {
+    let macc_1 = commands.spawn(MaccBundle::new(Vec2 {
         x: 0.0,
         y: 0.0,
     }, asset_handles.get_sprite_handle_macc(), colliders.get_macc())).id();
+    commands.entity(macc_1).insert(Clickable::new(OnClickEvents::MaccEvent(macc_1)));
 
-    commands.entity(macc_ent).insert(Clickable::new(OnClickEvents::MaccEvent(macc_ent)));
-
+    let macc_2 = commands.spawn(MaccBundle::new(Vec2 {
+        x: 5.0,
+        y: 0.0,
+    }, asset_handles.get_sprite_handle_macc(), colliders.get_macc())).id();
+    commands.entity(macc_2).insert(Clickable::new(OnClickEvents::MaccEvent(macc_2)));
 }
 
 pub fn create_colliders(

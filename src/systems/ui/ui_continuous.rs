@@ -1,6 +1,6 @@
 use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}}, transform::components::Transform, math::{Quat, EulerRot, Vec2}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter, geometry::{Collider, CollisionGroups, Group}};
-use crate::{components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::GameEntitiesClickable}};
+use crate::{components::{clickable::OnClickEvents, grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::{GameEntitiesClickable, SelectedMacc}}};
 
 pub fn update_compass(
     weather: Res<Weather>,
@@ -36,6 +36,7 @@ pub fn update_nanite_info_pane(
 pub fn ui_hex_click(
     mut hex_grid: ResMut<HexGrid>,
     rapier_context: Res<RapierContext>,
+    mut selected_macc: ResMut<SelectedMacc>,
     mut reader: EventReader<OnClickEvents>,
     hex_q: Query<(&GridPos, &Terrain, &Transform, &Collider)>,
     mut pos_text_q: Query<&mut Text, (With<HexPosText>, Without<HexTerrainText>)>,
@@ -65,6 +66,7 @@ pub fn ui_hex_click(
             },
             OnClickEvents::MaccEvent(ent) => {
                 println!("Clicked MACC");
+                selected_macc.macc = Some(ent.clone());
             }
         }
     }
