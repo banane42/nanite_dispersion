@@ -16,7 +16,6 @@ impl Weather {
         } else if dir > 360.0 {
             dir -= 360.0;
         }
-        println!("Adjusting wind to {}", dir);
         self.wind_direction = dir;
     }
 }

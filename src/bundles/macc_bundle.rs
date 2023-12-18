@@ -27,7 +27,10 @@ impl MaccBundle {
 
         Self {
             team: Team::A,
-            macc: Macc {},
+            macc: Macc {
+                target_position: position,
+                turn_radius: 1.0
+            },
             sprite: sprite,
             collider: collider,
             collision_group: CollisionGroups::new(

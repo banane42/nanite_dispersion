@@ -96,8 +96,8 @@ pub fn ui_setup(
                 style: Style {
                     width: Val::Auto,
                     height: Val::Auto,
+                    min_width: Val::Percent(20.0),
                     flex_grow: 1.0,
-                    // margin: UiRect::vertical(Val::Px(24.0)),
                     border: UiRect::all(Val::Px(2.0)),
                     ..default()
                 },

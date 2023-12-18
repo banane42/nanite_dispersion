@@ -1,7 +1,7 @@
-use bevy::{ecs::{system::{Query, ResMut, Res}, query::{Changed, With}, entity::Entity}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color, input::{keyboard::KeyCode, Input}, transform::components::Transform};
+use bevy::{ecs::{system::{Query, ResMut, Res}, query::{Changed, With}, entity::Entity, event::EventReader}, hierarchy::Children, asset::{Handle, Assets}, sprite::ColorMaterial, render::color::Color, input::{keyboard::KeyCode, Input}, transform::components::Transform};
 use rand::{thread_rng, Rng, seq::SliceRandom};
 
-use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain, macc::Macc}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather, input::SelectedMacc}};
+use crate::{components::{nanite::Nanite, grid_pos::GridPos, terrain::Terrain, macc::Macc, game_events::GameEvents}, resources::{hex::{HexGrid, NaniteReserve, MapState}, weather::Weather, input::SelectedMacc}};
 
 pub fn nanite_wind(
     hex_grid: Res<HexGrid>,
@@ -93,6 +93,34 @@ pub fn adjust_wind(
     weather.adjust_wind();
 }
 
+pub fn game_event_react(
+    mut game_events: EventReader<GameEvents>,
+    mut selected_macc: ResMut<SelectedMacc>,
+    mut macc_q: Query<&mut Macc>
+) {
+    for event in game_events.read() {
+        match event {
+            GameEvents::HexSelect(_) => {},
+            GameEvents::MaccSelect(ent) => {
+                selected_macc.select(ent.clone());
+            },
+            GameEvents::MaccMoveOrder(pos) => {
+                println!("Mac move order");
+                if let Some(selected_macc) = selected_macc.get() {
+                    println!("Selected Macc");
+                    match macc_q.get_mut(selected_macc) {
+                        Ok(mut macc) => {
+                            println!("Setting pos");
+                            macc.target_position = pos.clone();
+                        },
+                        Err(err) => eprintln!("Error querying macc {}", err),
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn map_state_material_static(
     map_state: Res<MapState>,
     hex_grid: Res<HexGrid>,
@@ -153,35 +181,23 @@ pub fn nanite_material_update(
     }
 }
 
-pub fn test_coll(
-    keyboard_input: Res<Input<KeyCode>>,
-    selected_macc: Res<SelectedMacc>,
-    mut q: Query<&mut Transform, With<Macc>>
+pub fn move_maccs(
+    mut macc_q: Query<(&mut Transform, &Macc)>
 ) {
-
-    let mut trans = match selected_macc.macc {
-        Some(macc) => match q.get_mut(macc) {
-            Ok(t) => t,
-            Err(_) => return,
-        },
-        None => return,
-    };
-    let angle: f32 = if keyboard_input.pressed(KeyCode::Left) {
-        1.0
-    } else if keyboard_input.pressed(KeyCode::Right) {
-        -1.0
-    } else {
-        0.0
-    };
-
-    let direction: f32 = if keyboard_input.pressed(KeyCode::Up) {
-        1.0
-    } else if keyboard_input.pressed(KeyCode::Down) {
-        -1.0
-    } else {
-        0.0
-    };
-
-    trans.rotate_z(angle.to_radians());
-    trans.translation = trans.translation + (trans.up() * direction);
+    for (mut trans, macc) in macc_q.iter_mut() {
+        if macc.in_position(trans.translation.truncate()) {
+            continue;
+        }
+        // Need to rotate?
+        let direction_vec = (macc.target_position - trans.translation.truncate()).normalize();
+        let cross_prod = direction_vec.perp_dot(trans.up().truncate());
+        let angle = direction_vec.angle_between(trans.up().truncate()).abs();
+        let angle_delta = angle.min(macc.turn_radius.to_radians());
+        if cross_prod != 0.0 {
+            trans.rotate_z(angle_delta * cross_prod.signum() * -1.0);
+            continue;
+        }
+        //Move forward
+        trans.translation = trans.translation + (trans.up() * 1.0_f32.min(macc.target_position.distance(trans.translation.truncate())));
+    }
 }

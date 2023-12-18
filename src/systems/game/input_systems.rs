@@ -1,7 +1,7 @@
 use bevy::{ecs::{system::{ResMut, Query, Res}, query::With, event::{EventReader, EventWriter}}, window::{PrimaryWindow, Window}, render::camera::{Camera, OrthographicProjection}, transform::components::{GlobalTransform, Transform}, input::{Input, mouse::{MouseButton, MouseWheel}, keyboard::KeyCode}, math::Vec3, time::Time};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter};
 
-use crate::{resources::input::MouseWorldCoords, components::clickable::{OnClickEvent, ClickSignal}};
+use crate::{resources::input::MouseWorldCoords, components::{clickable::ClickSignal, game_events::GameEvents}};
 
 use super::startup_systems::MainCamera;
 
@@ -67,7 +67,8 @@ pub fn on_game_entity_click(
     mouse_wrld_coords: Res<MouseWorldCoords>,
     mouse_input: Res<Input<MouseButton>>,
     rapier_context: Res<RapierContext>,
-    mut event_writer: EventWriter<OnClickEvent>,
+    // mut event_writer: EventWriter<OnClickEvent>,
+    mut game_event_writer: EventWriter<GameEvents>,
     click_signal_q: Query<&ClickSignal>
 ) {
     mouse_input.get_just_released().filter(|x| {
@@ -79,12 +80,23 @@ pub fn on_game_entity_click(
             |entity| {
                 match click_signal_q.get(entity) {
                     Ok(signal) => {
-                        println!("Sending click event");
-                        event_writer.send(OnClickEvent { 
-                            signal: signal.clone(), 
-                            mouse_button: input.clone(), 
-                            entity: entity
-                        });
+                        match signal {
+                            ClickSignal::Hex => {
+                                if input.eq(&MouseButton::Left) {
+                                    println!("Sending Hex Signal");
+                                    game_event_writer.send(GameEvents::HexSelect(entity));
+                                } else if input.eq(&MouseButton::Right) {
+                                    println!("Sening Macc Move order");
+                                    game_event_writer.send(GameEvents::MaccMoveOrder(mouse_wrld_coords.0));
+                                }
+                            },
+                            ClickSignal::Macc => {
+                                if input.eq(&MouseButton::Left) {
+                                    println!("Sending macc select");
+                                    game_event_writer.send(GameEvents::MaccSelect(entity));
+                                }
+                            },
+                        }
                         true
                     },
                     Err(_) => true,

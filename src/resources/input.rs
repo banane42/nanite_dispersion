@@ -14,11 +14,25 @@ impl Default for GameEntitiesClickable {
 
 #[derive(Resource)]
 pub struct SelectedMacc {
-    pub macc: Option<Entity>
+    macc: Option<Entity>
 }
 
 impl Default for SelectedMacc {
     fn default() -> Self {
         Self { macc: None }
+    }
+}
+
+impl SelectedMacc {
+    pub fn select(&mut self, ent: Entity) {
+        self.macc = Some(ent);
+    }
+
+    pub fn deselect(&mut self) {
+        self.macc = None;
+    }
+
+    pub fn get(&self) -> Option<Entity> {
+        self.macc
     }
 }

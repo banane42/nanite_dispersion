@@ -1,6 +1,6 @@
 use bevy::{ecs::{system::{Query, Res, ResMut}, event::EventReader, query::{With, Changed, Without}}, transform::components::Transform, math::{Quat, EulerRot, Vec2}, text::Text, render::view::Visibility, ui::{Interaction, widget::Button}, input::{mouse::MouseButton, Input}};
 use bevy_rapier2d::{plugin::RapierContext, pipeline::QueryFilter, geometry::{Collider, CollisionGroups, Group}};
-use crate::{components::{grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc, clickable::{OnClickEvent, ClickSignal}}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::{GameEntitiesClickable, SelectedMacc}}};
+use crate::{components::{grid_pos::GridPos, ui::{HexPosText, UICompass, RightInfoPane, ButtonOnClick, HexTerrainText, HexNaniteText}, terrain::Terrain, nanite::Nanite, macc::Macc, game_events::GameEvents}, resources::{weather::Weather, hex::{HexGrid, MapState}, input::GameEntitiesClickable}};
 
 pub fn update_compass(
     weather: Res<Weather>,
@@ -33,25 +33,20 @@ pub fn update_nanite_info_pane(
     }
 }
 
-pub fn ui_hex_click(
+pub fn ui_game_event_react(
     mut hex_grid: ResMut<HexGrid>,
     rapier_context: Res<RapierContext>,
-    mut selected_macc: ResMut<SelectedMacc>,
-    mut reader: EventReader<OnClickEvent>,
+    mut game_event_reader: EventReader<GameEvents>,
     hex_q: Query<(&GridPos, &Terrain, &Transform, &Collider)>,
     mut pos_text_q: Query<&mut Text, (With<HexPosText>, Without<HexTerrainText>)>,
     mut terrain_text_q: Query<&mut Text, (With<HexTerrainText>, Without<HexPosText>)>,
     mut info_pane_q: Query<&mut Visibility, With<RightInfoPane>>,
     test_q: Query<(Option<&Nanite>, Option<&Macc>)>
 ) {
-    for event in reader.read() {
-        match event.signal {
-            ClickSignal::Hex => {
-                if event.mouse_button == MouseButton::Right {
-                    return;
-                }
-                println!("Clicked Hex");
-                match (hex_q.get(event.entity), pos_text_q.get_single_mut(), terrain_text_q.get_single_mut(), info_pane_q.get_single_mut()) {
+    for event in game_event_reader.read() {
+        match event {
+            GameEvents::HexSelect(ent) => {
+                match (hex_q.get(*ent), pos_text_q.get_single_mut(), terrain_text_q.get_single_mut(), info_pane_q.get_single_mut()) {
                     (Ok((grid_pos, terrain, hex_trans, hex_coll)), Ok(mut pos_text), Ok(mut terrain_text), Ok(mut info_pane_vis)) => {
                         *info_pane_vis = Visibility::Visible;
                         pos_text.sections.first_mut().unwrap().value = format!("Coordinates\n{}", grid_pos.to_string());
@@ -67,10 +62,12 @@ pub fn ui_hex_click(
                     _ => {}
                 }
             },
-            ClickSignal::Macc => {
-                println!("Clicked MACC");
-                selected_macc.macc = Some(event.entity);
-            }
+            GameEvents::MaccSelect(_) => {
+
+            },
+            GameEvents::MaccMoveOrder(_) => {
+
+            },
         }
     }
 }

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use components::clickable::OnClickEvent;
+use components::game_events::GameEvents;
 use resources::{input::GameEntitiesClickable, hex::{MapState, HexGrid}, asset_handles::LoadingStates};
-use systems::{game::{startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, continuous_systems::map_state_material_static}, game::{input_systems::{calc_world_coords, on_game_entity_click, keyboard_input, mouse_input, zoom_camera}, startup_systems::create_colliders}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply, test_coll, adjust_wind}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_hex_click, ui_button_system, reset_game_entities_clickable, update_nanite_info_pane}}};
+use systems::{game::{startup_systems::{setup_camera, setup_assets, spawn_hexagons, setup}, continuous_systems::map_state_material_static}, game::{input_systems::{calc_world_coords, on_game_entity_click, keyboard_input, mouse_input, zoom_camera}, startup_systems::create_colliders}, game::continuous_systems::{nanite_material_update, nanite_dispersion, nanite_wind, nanite_introduction, nanite_transient_apply, adjust_wind, game_event_react, move_maccs}, ui::{ui_setup::ui_setup, ui_continuous::{update_compass, ui_game_event_react, ui_button_system, reset_game_entities_clickable, update_nanite_info_pane}}};
 
 mod resources;
 mod systems;
@@ -14,7 +14,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0 ))
-        .add_event::<OnClickEvent>()
+        .add_event::<GameEvents>()
         .add_state::<LoadingStates>()
         //Startup
         //Game Systems
@@ -32,8 +32,7 @@ fn main() {
         .add_systems(First, ui_button_system.before(reset_game_entities_clickable).run_if(in_state(LoadingStates::Complete)))
         .add_systems(PreUpdate, zoom_camera)
         .add_systems(PreUpdate, on_game_entity_click.run_if(game_entities_clickable))
-        //TODO REMOVE
-        .add_systems(FixedUpdate, test_coll)
+        .add_systems(FixedUpdate, move_maccs)
         //Nanite systems
         .add_systems(Update, ((
                 nanite_introduction,
@@ -41,8 +40,9 @@ fn main() {
                 nanite_dispersion
             )).run_if(time_passed(1.0))
         )
+        .add_systems(Update, game_event_react)
         .add_systems(Update, adjust_wind.run_if(time_passed(10.0)))
-        .add_systems(Update, ui_hex_click.run_if(in_state(LoadingStates::Complete)))
+        .add_systems(Update, ui_game_event_react.run_if(in_state(LoadingStates::Complete)))
         .add_systems(PostUpdate, nanite_transient_apply)
         //Graphics update
         .add_systems(Last, map_state_material_static.run_if(map_state_changed.and_then(in_state(LoadingStates::Complete))))
