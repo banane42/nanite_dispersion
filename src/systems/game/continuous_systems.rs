@@ -190,11 +190,13 @@ pub fn move_maccs(
         }
         // Need to rotate?
         let direction_vec = (macc.target_position - trans.translation.truncate()).normalize();
-        let cross_prod = direction_vec.perp_dot(trans.up().truncate());
-        let angle = direction_vec.angle_between(trans.up().truncate()).abs();
+        let forward_vec = trans.up().truncate().normalize();
+        let cross_prod = direction_vec.perp_dot(forward_vec);
+        let angle = direction_vec.angle_between(forward_vec).abs();
         let angle_delta = angle.min(macc.turn_radius.to_radians());
-        if cross_prod != 0.0 {
-            trans.rotate_z(angle_delta * cross_prod.signum() * -1.0);
+        trans.rotate_z(angle_delta * -cross_prod.signum());
+
+        if !(-0.1..0.1).contains(&cross_prod) {
             continue;
         }
         //Move forward
